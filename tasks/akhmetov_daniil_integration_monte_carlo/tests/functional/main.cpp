@@ -17,7 +17,7 @@
 
 namespace akhmetov_daniil_integration_monte_carlo {
 
-constexpr double MY_PI = 3.14159265358979323846;
+constexpr double kMyPi = std::numbers::pi;
 
 class AkhmetovDaniilRunFuncTestsProcesses : public ppc::util::BaseRunFuncTests<InType, OutType, TestType> {
  public:
@@ -64,8 +64,8 @@ const std::array<TestType, 10> kTestParam = {
     std::make_tuple(std::make_tuple(0.0, 2.0, 100000, FuncType::kQuadraticFunc), "kQuadraticFunc_test1"),
     std::make_tuple(std::make_tuple(-1.0, 3.0, 200000, FuncType::kQuadraticFunc), "kQuadraticFunc_test2"),
 
-    std::make_tuple(std::make_tuple(0.0, MY_PI, 200000, FuncType::kSinFunc), "kSinFunc_test1"),
-    std::make_tuple(std::make_tuple(0.0, 2.0 * MY_PI, 300000, FuncType::kSinFunc), "kSinFunc_test2"),
+    std::make_tuple(std::make_tuple(0.0, kMyPi, 200000, FuncType::kSinFunc), "kSinFunc_test1"),
+    std::make_tuple(std::make_tuple(0.0, 2.0 * kMyPi, 300000, FuncType::kSinFunc), "kSinFunc_test2"),
 
     std::make_tuple(std::make_tuple(0.0, 1.0, 100000, FuncType::kExpFunc), "kExpFunc_test1"),
     std::make_tuple(std::make_tuple(-1.0, 2.0, 200000, FuncType::kExpFunc), "kExpFunc_test2"),
