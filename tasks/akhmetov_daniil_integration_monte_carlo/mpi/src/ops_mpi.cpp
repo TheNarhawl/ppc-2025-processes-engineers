@@ -17,11 +17,8 @@ AkhmetovDaniilIntegrationMonteCarloMPI::AkhmetovDaniilIntegrationMonteCarloMPI(c
 
 bool AkhmetovDaniilIntegrationMonteCarloMPI::ValidationImpl() {
   const auto &[a, b, n, func_id] = GetInput();
-  
-  return (a < b) && 
-         (n > 0) && 
-         (func_id >= FuncType::kLinearFunc) && 
-         (func_id <= FuncType::kConstFunc);
+
+  return (a < b) && (n > 0) && (func_id >= FuncType::kLinearFunc) && (func_id <= FuncType::kConstFunc);
 }
 
 bool AkhmetovDaniilIntegrationMonteCarloMPI::PreProcessingImpl() {

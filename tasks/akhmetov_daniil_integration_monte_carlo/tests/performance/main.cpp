@@ -39,13 +39,15 @@ TEST_P(AkhmetovDaniilIntegrationMonteCarloRunPerfTestProcesses, RunPerfModes) {
   ExecuteTest(GetParam());
 }
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, AkhmetovDaniilIntegrationMonteCarloMPI, AkhmetovDaniilIntegrationMonteCarloSEQ>(
-    PPC_SETTINGS_akhmetov_daniil_integration_monte_carlo);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, AkhmetovDaniilIntegrationMonteCarloMPI, AkhmetovDaniilIntegrationMonteCarloSEQ>(
+        PPC_SETTINGS_akhmetov_daniil_integration_monte_carlo);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
 const auto kPerfTestName = AkhmetovDaniilIntegrationMonteCarloRunPerfTestProcesses::CustomPerfTestName;
 
-INSTANTIATE_TEST_SUITE_P(RunModeTests, AkhmetovDaniilIntegrationMonteCarloRunPerfTestProcesses, kGtestValues, kPerfTestName);
+INSTANTIATE_TEST_SUITE_P(RunModeTests, AkhmetovDaniilIntegrationMonteCarloRunPerfTestProcesses, kGtestValues,
+                         kPerfTestName);
 
 }  // namespace akhmetov_daniil_integration_monte_carlo

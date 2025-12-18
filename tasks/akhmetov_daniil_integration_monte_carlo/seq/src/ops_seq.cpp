@@ -1,7 +1,8 @@
+#include "akhmetov_daniil_integration_monte_carlo/seq/include/ops_seq.hpp"
+
 #include <cmath>
 
 #include "akhmetov_daniil_integration_monte_carlo/common/include/common.hpp"
-#include "akhmetov_daniil_integration_monte_carlo/seq/include/ops_seq.hpp"
 
 namespace akhmetov_daniil_integration_monte_carlo {
 
@@ -14,10 +15,7 @@ AkhmetovDaniilIntegrationMonteCarloSEQ::AkhmetovDaniilIntegrationMonteCarloSEQ(c
 bool AkhmetovDaniilIntegrationMonteCarloSEQ::ValidationImpl() {
   const auto &[a, b, n, func_id] = GetInput();
 
-  return (a < b) && 
-         (n > 0) && 
-         (func_id >= FuncType::kLinearFunc) && 
-         (func_id <= FuncType::kConstFunc);
+  return (a < b) && (n > 0) && (func_id >= FuncType::kLinearFunc) && (func_id <= FuncType::kConstFunc);
 }
 
 bool AkhmetovDaniilIntegrationMonteCarloSEQ::PreProcessingImpl() {
@@ -42,7 +40,7 @@ bool AkhmetovDaniilIntegrationMonteCarloSEQ::RunImpl() {
     }
 
     double x = a_ + ((b_ - a_) * current);
-    
+
     double fx = FunctionPair::Function(func_id_, x);
     sum += fx;
   }

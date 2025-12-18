@@ -71,12 +71,12 @@ const std::array<TestType, 10> kTestParam = {
     std::make_tuple(std::make_tuple(-1.0, 2.0, 200000, FuncType::kExpFunc), "kExpFunc_test2"),
 
     std::make_tuple(std::make_tuple(0.0, 5.0, 50000, FuncType::kConstFunc), "kConstFunc_test1"),
-    std::make_tuple(std::make_tuple(-3.0, 3.0, 50000, FuncType::kConstFunc), "kConstFunc_test2")
-};
+    std::make_tuple(std::make_tuple(-3.0, 3.0, 50000, FuncType::kConstFunc), "kConstFunc_test2")};
 
-const auto kTestTasksList = std::tuple_cat(
-    ppc::util::AddFuncTask<AkhmetovDaniilIntegrationMonteCarloMPI, InType>(kTestParam, PPC_SETTINGS_akhmetov_daniil_integration_monte_carlo),
-    ppc::util::AddFuncTask<AkhmetovDaniilIntegrationMonteCarloSEQ, InType>(kTestParam, PPC_SETTINGS_akhmetov_daniil_integration_monte_carlo));
+const auto kTestTasksList = std::tuple_cat(ppc::util::AddFuncTask<AkhmetovDaniilIntegrationMonteCarloMPI, InType>(
+                                               kTestParam, PPC_SETTINGS_akhmetov_daniil_integration_monte_carlo),
+                                           ppc::util::AddFuncTask<AkhmetovDaniilIntegrationMonteCarloSEQ, InType>(
+                                               kTestParam, PPC_SETTINGS_akhmetov_daniil_integration_monte_carlo));
 
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 

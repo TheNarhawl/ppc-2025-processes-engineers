@@ -22,9 +22,9 @@ class FunctionPair {
   static double Function(FuncType func_id, double x) {
     switch (func_id) {
       case FuncType::kLinearFunc:
-        return 3.0 * x + 2.0;
+        return (3.0 * x) + 2.0;
       case FuncType::kQuadraticFunc:
-        return x * x + 1.0;
+        return (x * x) + 1.0;
       case FuncType::kSinFunc:
         return std::sin(x);
       case FuncType::kExpFunc:
@@ -39,9 +39,9 @@ class FunctionPair {
   static double Integral(FuncType func_id, double x) {
     switch (func_id) {
       case FuncType::kLinearFunc:
-        return 1.5 * x * x + 2.0 * x;
+        return (1.5 * x * x) + (2.0 * x);
       case FuncType::kQuadraticFunc:
-        return x * x * x / 3.0 + x;
+        return (x * x * x / 3.0) + x;
       case FuncType::kSinFunc:
         return -std::cos(x);
       case FuncType::kExpFunc:
