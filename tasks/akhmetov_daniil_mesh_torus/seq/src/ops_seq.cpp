@@ -1,9 +1,9 @@
 #include "akhmetov_daniil_mesh_torus/seq/include/ops_seq.hpp"
-#include "akhmetov_daniil_mesh_torus/common/include/common.hpp"
-
-#include "task/include/task.hpp"
 
 #include <vector>
+
+#include "akhmetov_daniil_mesh_torus/common/include/common.hpp"
+#include "task/include/task.hpp"
 
 namespace akhmetov_daniil_mesh_torus {
 

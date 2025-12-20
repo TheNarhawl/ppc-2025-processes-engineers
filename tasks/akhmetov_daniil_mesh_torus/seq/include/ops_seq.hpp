@@ -2,7 +2,6 @@
 
 #include "akhmetov_daniil_mesh_torus/common/include/common.hpp"
 
-
 namespace akhmetov_daniil_mesh_torus {
 
 class MeshTorusSeq : public BaseTask {
