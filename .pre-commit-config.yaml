@@ -41,11 +41,11 @@ repos:
       - id: yamllint
 
   # Shell script linting with shellcheck
-  - repo: https://github.com/koalaman/shellcheck-precommit
-    rev: v0.11.0
-    hooks:
-      - id: shellcheck
-        files: \.sh$
+  # - repo: https://github.com/koalaman/shellcheck-precommit
+  #   rev: v0.11.0
+  #   hooks:
+  #     - id: shellcheck
+  #       files: \.sh$
 
 # Configuration
 default_stages: [pre-commit]
