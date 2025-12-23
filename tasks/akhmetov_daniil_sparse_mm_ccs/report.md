@@ -1,4 +1,4 @@
-# Решетка-тор
+# Умножение разреженных матриц. Элементы типа double. Формат хранения матрицы – столбцовый (CCS).
 
 - Выполнил: Ахметов Даниил Данисович
 - Группа: 3823Б1ПР2
@@ -346,5 +346,6 @@ bool SparseMatrixMultiplicationCCSMPI::RunImpl() {
 1. Сысоев А. В., Лекции по курсу «Параллельное программирование для кластерных систем».
 
 2. Документация по курсу «Параллельное программирование», URL: https://learning-process.github.io/parallel_programming_course/ru/index.html
+
 
 3. Microsoft MPI Documentation: https://docs.microsoft.com/en-us/message-passing-interface/

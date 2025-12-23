@@ -1,12 +1,17 @@
 #include "akhmetov_daniil_sparse_mm_ccs/seq/include/ops_seq.hpp"
+
 #include <algorithm>
 #include <cmath>
+#include <utility>
+#include <vector>
 
 namespace akhmetov_daniil_sparse_mm_ccs {
 
 bool SparseMatrixMultiplicationCCSSeq::ValidationImpl() {
-  if (GetInput().size() != 2) return false;
-  // A.cols == B.rows
+  if (GetInput().size() != 2) {
+    return false;
+  }
+  // a.cols == b.rows
   return GetInput()[0].cols == GetInput()[1].rows;
 }
 
@@ -19,26 +24,23 @@ bool SparseMatrixMultiplicationCCSSeq::PreProcessingImpl() {
 }
 
 bool SparseMatrixMultiplicationCCSSeq::RunImpl() {
-  const auto& A = GetInput()[0];
-  const auto& B = GetInput()[1];
-  
-  std::vector<double> dense_col(A.rows, 0.0);
+  const auto &a = GetInput()[0];
+  const auto &b = GetInput()[1];
+  std::vector<double> dense_col(a.rows, 0.0);
 
-  for (int j = 0; j < B.cols; ++j) {
+  for (int j = 0; j < b.cols; ++j) {
     std::fill(dense_col.begin(), dense_col.end(), 0.0);
-    
-    // Вычисляем столбец j матрицы C: C_j = A * B_j
-    for (int k_ptr = B.col_ptr[j]; k_ptr < B.col_ptr[j + 1]; ++k_ptr) {
-      int k = B.row_indices[k_ptr];
-      double valB = B.values[k_ptr];
 
-      for (int i_ptr = A.col_ptr[k]; i_ptr < A.col_ptr[k + 1]; ++i_ptr) {
-        dense_col[A.row_indices[i_ptr]] += A.values[i_ptr] * valB;
+    for (int k_ptr = b.col_ptr[j]; k_ptr < b.col_ptr[j + 1]; ++k_ptr) {
+      int k = b.row_indices[k_ptr];
+      double val_b = b.values[k_ptr];
+
+      for (int i_ptr = a.col_ptr[k]; i_ptr < a.col_ptr[k + 1]; ++i_ptr) {
+        dense_col[a.row_indices[i_ptr]] += a.values[i_ptr] * val_b;
       }
     }
 
-    // Сохраняем ненулевые элементы в CCS
-    for (int i = 0; i < A.rows; ++i) {
+    for (int i = 0; i < a.rows; ++i) {
       if (std::abs(dense_col[i]) > 1e-15) {
         res_matrix_.values.push_back(dense_col[i]);
         res_matrix_.row_indices.push_back(i);

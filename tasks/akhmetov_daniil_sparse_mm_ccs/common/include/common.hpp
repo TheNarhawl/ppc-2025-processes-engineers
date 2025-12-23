@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include <string>
+
 #include "task/include/task.hpp"
 
 namespace akhmetov_daniil_sparse_mm_ccs {
@@ -13,9 +13,9 @@ struct SparseMatrixCCS {
   std::vector<int> row_indices;
   std::vector<int> col_ptr;
 
-  bool operator==(const SparseMatrixCCS& other) const {
-    return rows == other.rows && cols == other.cols && values == other.values &&
-           row_indices == other.row_indices && col_ptr == other.col_ptr;
+  bool operator==(const SparseMatrixCCS &other) const {
+    return rows == other.rows && cols == other.cols && values == other.values && row_indices == other.row_indices &&
+           col_ptr == other.col_ptr;
   }
 };
 
