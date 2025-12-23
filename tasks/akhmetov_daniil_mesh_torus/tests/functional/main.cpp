@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <algorithm>
 #include <array>
 #include <string>
 #include <tuple>
@@ -30,7 +29,7 @@ class MeshTorusFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, Te
 
     int mpi_initialized = 0;
     MPI_Initialized(&mpi_initialized);
-    if (mpi_initialized) {
+    if (mpi_initialized != 0) {
       MPI_Comm_size(MPI_COMM_WORLD, &world_size_);
       MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
     } else {
@@ -62,7 +61,7 @@ class MeshTorusFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, Te
   }
 
  private:
-  bool CheckSeq(const OutType &out) const {
+  [[nodiscard]] bool CheckSeq(const OutType &out) const {
     if (out.payload != expected_payload_) {
       return false;
     }
@@ -78,7 +77,7 @@ class MeshTorusFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, Te
     return true;
   }
 
-  bool CheckMpi(const OutType &out) const {
+  [[nodiscard]] bool CheckMpi(const OutType &out) const {
     if (rank_ != dest_) {
       return out.payload.empty() && out.path.empty();
     }
@@ -98,7 +97,7 @@ class MeshTorusFuncTest : public ppc::util::BaseRunFuncTests<InType, OutType, Te
   }
 
   InType input_{};
-  std::vector<int> expected_payload_{};
+  std::vector<int> expected_payload_;
   int world_size_{1};
   int rank_{0};
   int source_{0};

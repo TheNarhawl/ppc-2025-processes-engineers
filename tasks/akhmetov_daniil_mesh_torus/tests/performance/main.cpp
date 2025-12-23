@@ -1,10 +1,7 @@
 #include <gtest/gtest.h>
 #include <mpi.h>
 
-#include <algorithm>
 #include <string>
-#include <tuple>
-#include <vector>
 
 #include "akhmetov_daniil_mesh_torus/common/include/common.hpp"
 #include "akhmetov_daniil_mesh_torus/mpi/include/ops_mpi.hpp"
@@ -17,46 +14,54 @@ using ppc::util::PerfTestParam;
 
 class MeshTorusPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
  protected:
-  InType test_input_data_;
-  bool data_prepared_ = false;
-  int world_size_ = 1;
-  int rank_ = 0;
-  bool is_seq_test_ = false;
+  InType test_input_data;
+  bool data_prepared = false;
+  int world_size = 1;
+  int rank = 0;
+  bool is_seq_test = false;
 
   void SetUp() override {
     std::string task_name = std::get<1>(GetParam());
-    is_seq_test_ = (task_name.find("seq") != std::string::npos);
+    is_seq_test = (task_name.find("seq") != std::string::npos);
 
     int mpi_initialized = 0;
     MPI_Initialized(&mpi_initialized);
-    if (mpi_initialized) {
-      MPI_Comm_size(MPI_COMM_WORLD, &world_size_);
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank_);
+    if (mpi_initialized != 0) {
+      MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     }
 
     PrepareTestData();
   }
 
   void PrepareTestData() {
-    if (data_prepared_) {
+    if (data_prepared) {
       return;
     }
 
     const int data_size = 10000000;
 
-    test_input_data_.source = 0;
-    test_input_data_.dest = is_seq_test_ ? 0 : (world_size_ > 1 ? (world_size_ - 1) : 0);
-
-    test_input_data_.payload.resize(data_size);
-    for (int i = 0; i < data_size; ++i) {
-      test_input_data_.payload[i] = i + 1;
+    test_input_data.source = 0;
+    if (is_seq_test) {
+      test_input_data.dest = 0;
+    } else {
+      if (world_size > 1) {
+        test_input_data.dest = world_size - 1;
+      } else {
+        test_input_data.dest = 0;
+      }
     }
 
-    data_prepared_ = true;
+    test_input_data.payload.resize(data_size);
+    for (int i = 0; i < data_size; ++i) {
+      test_input_data.payload[i] = i + 1;
+    }
+
+    data_prepared = true;
   }
 
   InType GetTestInputData() override {
-    return test_input_data_;
+    return test_input_data;
   }
 
   bool CheckTestOutputData(OutType &out) override {
@@ -64,30 +69,30 @@ class MeshTorusPerfTest : public ppc::util::BaseRunPerfTests<InType, OutType> {
     bool is_mpi = (task_name.find("mpi") != std::string::npos);
 
     if (is_mpi) {
-      if (rank_ != test_input_data_.dest) {
+      if (rank != test_input_data.dest) {
         return out.payload.empty();
       }
-      if (out.payload.size() != test_input_data_.payload.size()) {
+      if (out.payload.size() != test_input_data.payload.size()) {
         return false;
       }
       if (out.payload.empty()) {
         return true;
       }
-      return out.payload.front() == test_input_data_.payload.front() &&
-             out.payload.back() == test_input_data_.payload.back();
-    } else {
-      if (rank_ == 0) {
-        if (out.payload.size() != test_input_data_.payload.size()) {
-          return false;
-        }
-        if (out.payload.empty()) {
-          return true;
-        }
-        return out.payload.front() == test_input_data_.payload.front() &&
-               out.payload.back() == test_input_data_.payload.back();
-      }
-      return true;
+      return out.payload.front() == test_input_data.payload.front() &&
+             out.payload.back() == test_input_data.payload.back();
     }
+
+    if (rank == 0) {
+      if (out.payload.size() != test_input_data.payload.size()) {
+        return false;
+      }
+      if (out.payload.empty()) {
+        return true;
+      }
+      return out.payload.front() == test_input_data.payload.front() &&
+             out.payload.back() == test_input_data.payload.back();
+    }
+    return true;
   }
 };
 

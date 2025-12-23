@@ -4,7 +4,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <iterator>
+#include <utility>
 #include <vector>
+
+#include "akhmetov_daniil_mesh_torus/common/include/common.hpp"
 
 namespace akhmetov_daniil_mesh_torus {
 
@@ -14,7 +18,7 @@ MeshTorusMpi::MeshTorusMpi(const InType &in) {
   GetOutput() = {};
 }
 
-std::pair<int, int> MeshTorusMpi::ComputeGrid(int size) const {
+std::pair<int, int> MeshTorusMpi::ComputeGrid(int size) {
   int rows = static_cast<int>(std::sqrt(static_cast<double>(size)));
   while (rows > 1 && (size % rows != 0)) {
     --rows;
@@ -29,19 +33,19 @@ std::pair<int, int> MeshTorusMpi::ComputeGrid(int size) const {
   return {rows, cols};
 }
 
-int MeshTorusMpi::RankFromCoords(int row, int col, int rows, int cols) const {
+int MeshTorusMpi::RankFromCoords(int row, int col, int rows, int cols) {
   int rr = ((row % rows) + rows) % rows;
   int cc = ((col % cols) + cols) % cols;
-  return rr * cols + cc;
+  return (rr * cols) + cc;
 }
 
-std::pair<int, int> MeshTorusMpi::CoordsFromRank(int rank, int cols) const {
+std::pair<int, int> MeshTorusMpi::CoordsFromRank(int rank, int cols) {
   int r = rank / cols;
   int c = rank % cols;
   return {r, c};
 }
 
-std::vector<int> MeshTorusMpi::BuildPath(int rows, int cols, int source, int dest) const {
+std::vector<int> MeshTorusMpi::BuildPath(int rows, int cols, int source, int dest) {
   std::vector<int> path;
   if (rows <= 0 || cols <= 0) {
     path.push_back(source);
@@ -83,7 +87,7 @@ std::vector<int> MeshTorusMpi::BuildPath(int rows, int cols, int source, int des
 bool MeshTorusMpi::ValidationImpl() {
   int initialized = 0;
   MPI_Initialized(&initialized);
-  if (!initialized) {
+  if (initialized == 0) {
     return false;
   }
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank_);
@@ -104,7 +108,7 @@ bool MeshTorusMpi::PreProcessingImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank_);
   MPI_Comm_size(MPI_COMM_WORLD, &world_size_);
 
-  auto [r, c] = ComputeGrid(world_size_);
+  auto [r, c] = MeshTorusMpi::ComputeGrid(world_size_);
   rows_ = r;
   cols_ = c;
 
@@ -116,35 +120,53 @@ bool MeshTorusMpi::PreProcessingImpl() {
 bool MeshTorusMpi::RunImpl() {
   int source = 0;
   int dest = 0;
+  BroadcastSourceDest(source, dest);
 
+  int payload_size = 0;
+  BroadcastPayloadSize(source, payload_size);
+
+  std::vector<int> payload_buf = PreparePayloadBuffer(source, payload_size);
+  std::vector<int> path = MeshTorusMpi::BuildPath(rows_, cols_, source, dest);
+
+  std::vector<int> recv_payload;
+  ProcessPathCommunication(source, dest, path, payload_buf, recv_payload);
+
+  SetOutput(dest, recv_payload, path);
+  return true;
+}
+
+void MeshTorusMpi::BroadcastSourceDest(int &source, int &dest) {
   if (world_rank_ == 0) {
     const auto &in = GetInput();
     source = in.source;
     dest = in.dest;
   }
-
   MPI_Bcast(&source, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&dest, 1, MPI_INT, 0, MPI_COMM_WORLD);
+}
 
-  int payload_size = 0;
+void MeshTorusMpi::BroadcastPayloadSize(int source, int &payload_size) const {
   if (world_rank_ == source) {
     payload_size = static_cast<int>(local_in_.payload.size());
   }
   MPI_Bcast(&payload_size, 1, MPI_INT, source, MPI_COMM_WORLD);
+}
 
+[[nodiscard]] std::vector<int> MeshTorusMpi::PreparePayloadBuffer(int source, int payload_size) const {
   std::vector<int> payload_buf(payload_size);
   if (world_rank_ == source && payload_size > 0) {
-    std::copy(local_in_.payload.begin(), local_in_.payload.end(), payload_buf.begin());
+    std::copy(local_in_.payload.begin(), local_in_.payload.end(), payload_buf.begin());  // NOLINT(modernize-use-ranges)
   }
+  return payload_buf;
+}
 
-  std::vector<int> path = BuildPath(rows_, cols_, source, dest);
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+void MeshTorusMpi::ProcessPathCommunication(int source, int dest, const std::vector<int> &path,
+                                            const std::vector<int> &payload_buf, std::vector<int> &recv_payload) const {
   const int path_size = static_cast<int>(path.size());
-
-  auto it = std::find(path.begin(), path.end(), world_rank_);
+  auto it = std::find(path.begin(), path.end(), world_rank_);  // NOLINT(modernize-use-ranges)
   const bool on_path = (it != path.end());
   const int my_index = on_path ? static_cast<int>(std::distance(path.begin(), it)) : -1;
-
-  std::vector<int> recv_payload;
 
   if (source == dest) {
     if (world_rank_ == source) {
@@ -154,7 +176,7 @@ bool MeshTorusMpi::RunImpl() {
     recv_payload = payload_buf;
     if (path_size > 1) {
       int next_rank = path[1];
-      int size_to_send = payload_size;
+      int size_to_send = static_cast<int>(payload_buf.size());
       MPI_Send(&size_to_send, 1, MPI_INT, next_rank, 0, MPI_COMM_WORLD);
       if (size_to_send > 0) {
         MPI_Send(recv_payload.data(), size_to_send, MPI_INT, next_rank, 1, MPI_COMM_WORLD);
@@ -177,16 +199,16 @@ bool MeshTorusMpi::RunImpl() {
       }
     }
   }
+}
 
+void MeshTorusMpi::SetOutput(int dest, const std::vector<int> &recv_payload, const std::vector<int> &path) {
   if (world_rank_ == dest) {
-    local_out_.payload = std::move(recv_payload);
-    local_out_.path = std::move(path);
+    local_out_.payload = recv_payload;
+    local_out_.path = path;
     GetOutput() = local_out_;
   } else {
     GetOutput() = OutType{};
   }
-
-  return true;
 }
 
 bool MeshTorusMpi::PostProcessingImpl() {
