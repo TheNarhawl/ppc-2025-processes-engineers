@@ -15,8 +15,6 @@ MeshTorusSeq::MeshTorusSeq(const InType &in) {
 bool MeshTorusSeq::ValidationImpl() {
   const auto &in = GetInput();
   return in.source >= 0 && in.dest >= 0;
-
-  return true;
 }
 
 bool MeshTorusSeq::PreProcessingImpl() {
