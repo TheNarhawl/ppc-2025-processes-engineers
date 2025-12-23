@@ -114,13 +114,20 @@ void SparseMatrixMultiplicationCCSMPI::GatherResult(int rank, int size, int rows
     res_matrix_.rows = rows_a;
     res_matrix_.cols = cols_b;
     res_matrix_.col_ptr.resize(cols_b + 1, 0);
-    res_matrix_.values = local_values;
-    res_matrix_.row_indices = local_rows;
-
-    std::copy(local_col_ptr.begin(), local_col_ptr.end(), res_matrix_.col_ptr.begin());  // NOLINT
 
     int chunk = cols_b / size;
     int remainder = cols_b % size;
+    int start_col = 0;
+
+    res_matrix_.values = local_values;
+    res_matrix_.row_indices = local_rows;
+
+    for (int j = 0; j < static_cast<int>(local_col_ptr.size()) - 1; ++j) {
+      int global_j = start_col + j;
+      res_matrix_.col_ptr[global_j + 1] = local_col_ptr[j + 1];
+    }
+
+    int total_nnz_so_far = static_cast<int>(local_values.size());
 
     for (int proc = 1; proc < size; ++proc) {
       int proc_cols = chunk + (proc < remainder ? 1 : 0);
@@ -137,14 +144,17 @@ void SparseMatrixMultiplicationCCSMPI::GatherResult(int rank, int size, int rows
       MPI_Recv(rows.data(), proc_nnz, MPI_INT, proc, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       MPI_Recv(ptr.data(), proc_cols + 1, MPI_INT, proc, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-      int offset = static_cast<int>(res_matrix_.values.size());
       res_matrix_.values.insert(res_matrix_.values.end(), vals.begin(), vals.end());
       res_matrix_.row_indices.insert(res_matrix_.row_indices.end(), rows.begin(), rows.end());
 
-      for (int j = 1; j <= proc_cols; ++j) {
-        res_matrix_.col_ptr[proc_start + j] = ptr[j] + offset;
+      for (int j = 0; j < proc_cols; ++j) {
+        int global_col = proc_start + j;
+        res_matrix_.col_ptr[global_col + 1] = ptr[j + 1] + total_nnz_so_far;
       }
+
+      total_nnz_so_far += proc_nnz;
     }
+
   } else {
     int nnz = static_cast<int>(local_values.size());
     MPI_Send(&nnz, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
@@ -187,10 +197,58 @@ bool SparseMatrixMultiplicationCCSMPI::RunImpl() {
 
 bool SparseMatrixMultiplicationCCSMPI::PostProcessingImpl() {
   int rank = 0;
+  int size = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
   if (rank == 0) {
     GetOutput() = std::move(res_matrix_);
+
+    auto &output = GetOutput();
+
+    int rows = output.rows;
+    int cols = output.cols;
+    int col_ptr_size = static_cast<int>(output.col_ptr.size());
+    int values_size = static_cast<int>(output.values.size());
+
+    MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&cols, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&col_ptr_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&values_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    if (rank != 0) {
+      output.rows = rows;
+      output.cols = cols;
+      output.col_ptr.resize(col_ptr_size);
+      output.values.resize(values_size);
+      output.row_indices.resize(values_size);
+    }
+
+    MPI_Bcast(output.col_ptr.data(), col_ptr_size, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(output.values.data(), values_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(output.row_indices.data(), values_size, MPI_INT, 0, MPI_COMM_WORLD);
+
+  } else {
+    int rows = 0;
+    int cols = 0;
+    int col_ptr_size = 0;
+    int values_size = 0;
+    MPI_Bcast(&rows, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&cols, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&col_ptr_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&values_size, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    GetOutput().rows = rows;
+    GetOutput().cols = cols;
+    GetOutput().col_ptr.resize(col_ptr_size);
+    GetOutput().values.resize(values_size);
+    GetOutput().row_indices.resize(values_size);
+
+    MPI_Bcast(GetOutput().col_ptr.data(), col_ptr_size, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(GetOutput().values.data(), values_size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(GetOutput().row_indices.data(), values_size, MPI_INT, 0, MPI_COMM_WORLD);
   }
+
   return true;
 }
 

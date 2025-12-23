@@ -84,6 +84,7 @@ class AkhmetovDaniilSparseMmCcsFuncTests : public ppc::util::BaseRunFuncTests<In
     }
 
     std::vector<std::vector<double>> dense_result;
+
     if (!ConvertCcsToDense(values, row_indices, col_ptr, rows, cols, dense_result)) {
       return false;
     }
@@ -102,7 +103,8 @@ class AkhmetovDaniilSparseMmCcsFuncTests : public ppc::util::BaseRunFuncTests<In
     constexpr double kTolerance = 1e-10;
     for (std::size_t i = 0; i < dense_expected_.size(); ++i) {
       for (std::size_t j = 0; j < dense_expected_[i].size(); ++j) {
-        if (std::abs(dense_result[i][j] - dense_expected_[i][j]) > kTolerance) {
+        double diff = std::abs(dense_result[i][j] - dense_expected_[i][j]);
+        if (diff > kTolerance) {
           return false;
         }
       }
@@ -268,7 +270,7 @@ const std::array<TestType, 5> kCoverageTests = {
     TestType{13,
              {{1.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 0.0, 0.0}, {0.0, 0.0, 2.0, 0.0}, {0.0, 3.0, 0.0, 0.0}},
              {{0.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}, {4.0, 0.0}},
-             {{0.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 3.0}}},
+             {{0.0, 1.0}, {0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}}},
 
     // 14. Умножение на единичную (симметричное)
     TestType{14, {{1.0, 2.0}, {3.0, 4.0}}, {{1.0, 0.0}, {0.0, 1.0}}, {{1.0, 2.0}, {3.0, 4.0}}},
