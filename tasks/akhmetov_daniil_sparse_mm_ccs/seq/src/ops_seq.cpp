@@ -29,7 +29,7 @@ bool SparseMatrixMultiplicationCCSSeq::RunImpl() {
   std::vector<double> dense_col(a.rows, 0.0);
 
   for (int j = 0; j < b.cols; ++j) {
-    std::fill(dense_col.begin(), dense_col.end(), 0.0);
+    std::fill(dense_col.begin(), dense_col.end(), 0.0);  // NOLINT
 
     for (int k_ptr = b.col_ptr[j]; k_ptr < b.col_ptr[j + 1]; ++k_ptr) {
       int k = b.row_indices[k_ptr];
